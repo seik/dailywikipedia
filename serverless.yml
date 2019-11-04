@@ -1,0 +1,49 @@
+service: dailywikipediabot
+
+provider:
+  name: aws
+  runtime: python3.7
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'eu-west-3'}
+  environment:
+    BOT_USERMAME: dailywikipediabot
+    TELEGRAM_TOKEN: ${env:TELEGRAM_TOKEN}
+    AWS_ACCESS: ${env:AWS_ACCESS}
+    AWS_SECRET: ${env:AWS_SECRET}
+
+functions:
+  bot:
+    handler: bot.handler
+    events:
+      - http: POST /
+  daily:
+    handler: bot.daily
+    events:
+      - schedule: cron(0 19 * * ? *)
+
+plugins:
+  - serverless-python-requirements
+
+resources:
+  Resources:
+    usersTable: 
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: chats
+        AttributeDefinitions:
+          - 
+            AttributeName: id
+            AttributeType: N
+          - 
+            AttributeName: hour
+            AttributeType: N
+        KeySchema:
+          - 
+            AttributeName: id
+            KeyType: HASH
+          - 
+            AttributeName: hour
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
