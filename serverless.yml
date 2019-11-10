@@ -1,5 +1,23 @@
 service: dailywikipediabot
 
+package:
+  exclude:
+    - node_modules/**
+    - .idea/**
+    - .vscode/**
+    - .env
+    - README.md
+    - LICENSE
+    - package.json
+    - package-lock.json
+    - requirements.txt
+
+custom:
+  appAcronym: dailywikipedia
+  dynamodbTable: chats-${self:provider.stage}
+  dynamodbArn: arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.dynamodbTable}
+  dynamodbHost: https://dynamodb.${self:provider.region}.amazonaws.com
+
 provider:
   name: aws
   runtime: python3.7
@@ -8,8 +26,20 @@ provider:
   environment:
     BOT_USERMAME: dailywikipediabot
     TELEGRAM_TOKEN: ${env:TELEGRAM_TOKEN}
-    AWS_ACCESS: ${env:AWS_ACCESS}
-    AWS_SECRET: ${env:AWS_SECRET}
+    DYNAMODB_TABLE: ${self:custom.dynamodbTable}
+    DYNAMODB_HOST: ${self:custom.dynamodbHost}
+    REGION: ${self:provider.region}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+      Resource: ${self:custom.dynamodbArn}
 
 functions:
   bot:
@@ -26,24 +56,16 @@ plugins:
 
 resources:
   Resources:
-    usersTable: 
+    chatsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: chats
+        TableName: ${self:custom.dynamodbTable}
         AttributeDefinitions:
-          - 
-            AttributeName: id
-            AttributeType: N
-          - 
-            AttributeName: hour
+          - AttributeName: id
             AttributeType: N
         KeySchema:
-          - 
-            AttributeName: id
+          - AttributeName: id
             KeyType: HASH
-          - 
-            AttributeName: hour
-            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
