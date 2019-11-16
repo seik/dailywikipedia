@@ -21,7 +21,7 @@ OK_RESPONSE = {
 }
 ERROR_RESPONSE = {"statusCode": 400, "body": json.dumps("Oops, something went wrong!")}
 
-BOT_USERMAME = os.environ.get("BOT_USERMAME")
+BOT_USERNAME = os.environ.get("BOT_USERNAME")
 
 
 class ChatModel(Model):

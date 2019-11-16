@@ -24,7 +24,7 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'eu-west-3'}
   environment:
-    BOT_USERMAME: dailywikipediabot
+    BOT_USERNAME: dailywikipediabot
     TELEGRAM_TOKEN: ${env:TELEGRAM_TOKEN}
     DYNAMODB_TABLE: ${self:custom.dynamodbTable}
     DYNAMODB_HOST: ${self:custom.dynamodbHost}
