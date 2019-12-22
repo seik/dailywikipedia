@@ -7,9 +7,10 @@ verify_ssl = true
 black = "==19.10b0"
 
 [packages]
-httpx = "*"
+httpx = "==0.7.*"
 python-telegram-bot = "*"
 pynamodb = "*"
+atoma = "*"
 
 [requires]
 python_version = "3.7"

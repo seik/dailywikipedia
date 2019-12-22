@@ -2,6 +2,7 @@ import json
 import logging
 import os
 
+import atoma
 import httpx
 import telegram
 from pynamodb.attributes import NumberAttribute, BooleanAttribute
@@ -60,18 +61,18 @@ def handler(event, context) -> dict:
 
     text = update.effective_message.text
 
-    if text in ["/start", f"/start@{BOT_USERMAME}"]:
+    if text in ["/start", f"/start@{BOT_USERNAME}"]:
         start(chat_id)
-    elif text in ["/stop", f"/stop@{BOT_USERMAME}"]:
+    elif text in ["/stop", f"/stop@{BOT_USERNAME}"]:
         stop(chat_id)
-    elif text in ["/article", f"/article@{BOT_USERMAME}"]:
+    elif text in ["/article", f"/article@{BOT_USERNAME}"]:
         article(chat_id)
 
     return OK_RESPONSE
 
 
 def daily(event, context) -> dict:
-    article_url = get_random_article_url()
+    article_url = get_daily_article_url()
     chats = get_daily_chats()
 
     for chat in chats:
@@ -103,7 +104,7 @@ def stop(chat_id: int) -> None:
         text = "You are already unsubscribed"
     else:
         text = (
-            "I will no longer send you a daily article, to activate it again"
+            "I will no longer send you a daily article, to activate it again "
             "send /start"
         )
 
@@ -118,6 +119,12 @@ def article(chat_id: int):
 def get_random_article_url() -> str:
     response = httpx.get("https://en.wikipedia.org/api/rest_v1/page/random/summary")
     return response.json()["content_urls"]["desktop"]["page"]
+
+
+def get_daily_article_url() -> str:
+    response = httpx.get("http://en.wikipedia.org/w/api.php?action=featuredfeed&feed=featured&feedformat=atom")
+    feed = atoma.parse_atom_bytes(response.content)
+    return feed.entries[-1].links[-1].href
 
 
 def get_daily_chats() -> "ResultIterator[ChatModel]":
