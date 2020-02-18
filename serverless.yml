@@ -14,7 +14,7 @@ package:
 
 custom:
   appAcronym: dailywikipedia
-  dynamodbTable: chats-${self:provider.stage}
+  dynamodbTable: dailywikipedia-${self:provider.stage}
   dynamodbArn: arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.dynamodbTable}
   dynamodbHost: https://dynamodb.${self:provider.region}.amazonaws.com
 
@@ -56,7 +56,7 @@ plugins:
 
 resources:
   Resources:
-    chatsTable:
+    dailywikipediaTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:custom.dynamodbTable}

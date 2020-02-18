@@ -2,12 +2,15 @@ import json
 import logging
 import os
 
-import atoma
 import httpx
 import telegram
-from pynamodb.attributes import NumberAttribute, BooleanAttribute
+from telegram import constants
+from pynamodb.attributes import BooleanAttribute, NumberAttribute
 from pynamodb.models import Model
 from pynamodb.pagination import ResultIterator
+from telegram.error import BadRequest, Unauthorized
+
+import atoma
 
 logger = logging.getLogger()
 if logger.handlers:
@@ -31,9 +34,9 @@ class ChatModel(Model):
     daily = BooleanAttribute(default=True)
 
     class Meta:
-        table_name = os.environ['DYNAMODB_TABLE']
-        region = os.environ['REGION']
-        host = os.environ['DYNAMODB_HOST']
+        table_name = os.environ["DYNAMODB_TABLE"]
+        region = os.environ["REGION"]
+        host = os.environ["DYNAMODB_HOST"]
 
 
 def configure_telegram():
@@ -67,6 +70,8 @@ def handler(event, context) -> dict:
         stop(chat_id)
     elif text in ["/article", f"/article@{BOT_USERNAME}"]:
         article(chat_id)
+    elif text in ["/daily", f"/daily@{BOT_USERNAME}"]:
+        daily_article(chat_id)
 
     return OK_RESPONSE
 
@@ -76,7 +81,17 @@ def daily(event, context) -> dict:
     chats = get_daily_chats()
 
     for chat in chats:
-        bot.send_message(chat_id=chat.id, text=article_url)
+        try:
+            bot.send_message(chat_id=chat.id, text=article_url)
+        except (Unauthorized, BadRequest):
+            stop_chat_id(chat.id)
+
+    return OK_RESPONSE
+
+
+def daily_article(chat_id) -> dict:
+    article_url = get_daily_article_url()
+    bot.send_message(chat_id=chat_id, text=article_url)
 
     return OK_RESPONSE
 
@@ -122,7 +137,9 @@ def get_random_article_url() -> str:
 
 
 def get_daily_article_url() -> str:
-    response = httpx.get("http://en.wikipedia.org/w/api.php?action=featuredfeed&feed=featured&feedformat=atom")
+    response = httpx.get(
+        "http://en.wikipedia.org/w/api.php?action=featuredfeed&feed=featured&feedformat=atom"
+    )
     feed = atoma.parse_atom_bytes(response.content)
     return feed.entries[-1].links[-1].href
 
